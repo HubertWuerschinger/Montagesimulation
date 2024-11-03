@@ -1,7 +1,6 @@
 import streamlit as st
 import datetime
 import json
-from streamlit.runtime.scriptrunner import RerunException
 
 st.markdown("# Bestellen 🛒")
 st.sidebar.markdown("# Bestellen 🛒")
@@ -80,5 +79,5 @@ if st.button("Bestellung abschicken"):
             db.write(json.dumps(entry) + "\n")
 
     st.write("Die Bestellung wurde abgeschickt")
-    # Neuladen der App
-    raise RerunException
+    # Seite neu laden
+    st.experimental_set_query_params()

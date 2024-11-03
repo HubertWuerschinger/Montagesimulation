@@ -6,13 +6,34 @@ import os
 # CSV-Datei
 CSV_FILE = "bearbeitsungsstatus.csv"
 
-# Funktion zum Laden der CSV-Datei
+# Erwartete Spaltennamen in der CSV-Datei
+EXPECTED_COLUMNS = ["Kunde", "Auftragsnummer", "Bestelldatum Uhrzeit", "Aktuelle Dauer und Uhrzeit", 
+                    "Zeitdifferenz", "current varianten", "selected quality", "Kundentakt"]
+
+# Funktion zum Laden und Überprüfen der CSV-Datei
 def load_data():
     try:
-        # Überprüfen, ob die Datei existiert
         if os.path.isfile(CSV_FILE):
-            # Lade die CSV-Datei in einen DataFrame
+            # Laden der CSV-Datei
             data = pd.read_csv(CSV_FILE, encoding='ISO-8859-1')
+            
+            # Zeigen Sie die tatsächlichen Spaltennamen an, um Abweichungen zu überprüfen
+            st.write("Geladene Spalten:", data.columns.tolist())
+            
+            # Überprüfen, ob alle erwarteten Spalten vorhanden sind
+            missing_columns = [col for col in EXPECTED_COLUMNS if col not in data.columns]
+            if missing_columns:
+                st.warning(f"Die CSV-Datei hat fehlende oder abweichende Spalten: {missing_columns}")
+            
+            # Benennen Sie Spalten um, falls die CSV-Datei eine abweichende Schreibweise hat
+            # Beispiel: Spaltennamen bereinigen, um sicherzustellen, dass sie passen
+            column_rename_map = {
+                "Kunde": "Kunde",
+                "Kundentakt": "Kundentakt",
+                "Zeitdifferenz": "Zeitdifferenz"
+            }
+            data.rename(columns=column_rename_map, inplace=True)
+
             return data
         else:
             st.warning(f"Die Datei '{CSV_FILE}' wurde nicht gefunden.")

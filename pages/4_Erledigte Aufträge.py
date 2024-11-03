@@ -26,9 +26,14 @@ def load_data():
             if missing_columns:
                 st.warning(f"Die CSV-Datei hat fehlende oder abweichende Spalten: {missing_columns}")
             
-            # Konvertiere 'zeitdifferenz' in numerischen Datentyp, falls nötig
+            # Konvertiere 'zeitdifferenz' und 'kundentakt' in numerischen Datentyp, falls nötig
             if 'zeitdifferenz' in data.columns:
                 data['zeitdifferenz'] = pd.to_numeric(data['zeitdifferenz'], errors='coerce')
+            if 'kundentakt' in data.columns:
+                data['kundentakt'] = pd.to_numeric(data['kundentakt'], errors='coerce')
+
+            # Entferne Zeilen mit NaN-Werten in den Spalten 'zeitdifferenz' und 'kundentakt'
+            data = data.dropna(subset=['zeitdifferenz', 'kundentakt'])
 
             return data
         else:
@@ -49,28 +54,24 @@ if data is not None and not data.empty:
 
     # Überprüfe, ob die erforderlichen Spalten für das Diagramm vorhanden sind
     if all(col in data.columns for col in ["kunde", "kundentakt", "zeitdifferenz"]):
-        # Erstelle ein Balkendiagramm mit Altair, das die Aufträge nach Kundentakt und Bearbeitungszeit visualisiert
-        chart = alt.Chart(data).mark_bar().encode(
-            x=alt.X('kunde:N', title='Kunde'),
-            y=alt.Y('kundentakt:Q', title='Kundentakt'),
-            color=alt.value('steelblue')
-        ).properties(
-            width=600,
-            height=300
-        )
-
-        # Erstelle ein separates Balkendiagramm für die Bearbeitungszeit (Zeitdifferenz)
-        bearbeitung_chart = alt.Chart(data).mark_bar(color='orange').encode(
+        # Erstelle ein Balkendiagramm für die Bearbeitungszeit (Zeitdifferenz)
+        bar_chart = alt.Chart(data).mark_bar(color='orange').encode(
             x=alt.X('kunde:N', title='Kunde'),
             y=alt.Y('zeitdifferenz:Q', title='Bearbeitungszeit (Sekunden)')
+        )
+
+        # Erstelle ein Liniendiagramm für den Kundentakt
+        line_chart = alt.Chart(data).mark_line(color='blue').encode(
+            x=alt.X('kunde:N', title='Kunde'),
+            y=alt.Y('kundentakt:Q', title='Kundentakt')
+        )
+
+        # Kombiniere das Balken- und Liniendiagramm
+        combined_chart = alt.layer(bar_chart, line_chart).resolve_scale(
+            y='independent'  # Separate Skalen für Kundentakt und Bearbeitungszeit
         ).properties(
             width=600,
             height=300
-        )
-
-        # Kombiniere die beiden Diagramme
-        combined_chart = alt.layer(chart, bearbeitung_chart).resolve_scale(
-            y='independent'  # Separate Skalen für Kundentakt und Bearbeitungszeit
         )
 
         st.altair_chart(combined_chart, use_container_width=True)

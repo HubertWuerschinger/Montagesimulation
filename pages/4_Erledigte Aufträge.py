@@ -54,29 +54,29 @@ if data is not None and not data.empty:
 
     # Überprüfe, ob die erforderlichen Spalten für das Diagramm vorhanden sind
     if all(col in data.columns for col in ["kunde", "kundentakt", "zeitdifferenz"]):
-        # Erstelle ein Balkendiagramm für die Bearbeitungszeit (Zeitdifferenz)
-        bar_chart = alt.Chart(data).mark_bar(color='orange').encode(
+        # Liniendiagramm für die Bearbeitungszeit (Zeitdifferenz)
+        line_chart_bearbeitungszeit = alt.Chart(data).mark_line(color='orange').encode(
             x=alt.X('kunde:N', title='Kunde', sort=None),
-            y=alt.Y('zeitdifferenz:Q', title='Bearbeitungszeit (Sekunden)'),
-            tooltip=['kunde', 'zeitdifferenz']
-        )
-
-        # Erstelle ein Liniendiagramm für den Kundentakt
-        line_chart = alt.Chart(data).mark_line(color='blue').encode(
-            x=alt.X('kunde:N', title='Kunde', sort=None),
-            y=alt.Y('kundentakt:Q', title='Kundentakt'),
-            tooltip=['kunde', 'kundentakt']
-        )
-
-        # Kombiniere das Balken- und Liniendiagramm
-        combined_chart = alt.layer(bar_chart, line_chart).resolve_scale(
-            y='independent'  # Separate Skalen für Kundentakt und Bearbeitungszeit
+            y=alt.Y('zeitdifferenz:Q', title='Bearbeitungszeit (Sekunden)')
         ).properties(
             width=600,
-            height=400
+            height=300,
+            title="Bearbeitungszeit je Kunde"
         )
 
-        st.altair_chart(combined_chart, use_container_width=True)
+        # Liniendiagramm für den Kundentakt
+        line_chart_kundentakt = alt.Chart(data).mark_line(color='blue').encode(
+            x=alt.X('kunde:N', title='Kunde', sort=None),
+            y=alt.Y('kundentakt:Q', title='Kundentakt')
+        ).properties(
+            width=600,
+            height=300,
+            title="Kundentakt je Kunde"
+        )
+
+        # Darstellung beider Liniendiagramme übereinander
+        st.altair_chart(line_chart_bearbeitungszeit, use_container_width=True)
+        st.altair_chart(line_chart_kundentakt, use_container_width=True)
     else:
         st.warning("Die erforderlichen Spalten 'Kunde', 'Kundentakt' und 'Zeitdifferenz' sind nicht in den Daten vorhanden.")
 else:

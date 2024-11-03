@@ -56,14 +56,16 @@ if data is not None and not data.empty:
     if all(col in data.columns for col in ["kunde", "kundentakt", "zeitdifferenz"]):
         # Erstelle ein Balkendiagramm für die Bearbeitungszeit (Zeitdifferenz)
         bar_chart = alt.Chart(data).mark_bar(color='orange').encode(
-            x=alt.X('kunde:N', title='Kunde'),
-            y=alt.Y('zeitdifferenz:Q', title='Bearbeitungszeit (Sekunden)')
+            x=alt.X('kunde:N', title='Kunde', sort=None),
+            y=alt.Y('zeitdifferenz:Q', title='Bearbeitungszeit (Sekunden)'),
+            tooltip=['kunde', 'zeitdifferenz']
         )
 
         # Erstelle ein Liniendiagramm für den Kundentakt
         line_chart = alt.Chart(data).mark_line(color='blue').encode(
-            x=alt.X('kunde:N', title='Kunde'),
-            y=alt.Y('kundentakt:Q', title='Kundentakt')
+            x=alt.X('kunde:N', title='Kunde', sort=None),
+            y=alt.Y('kundentakt:Q', title='Kundentakt'),
+            tooltip=['kunde', 'kundentakt']
         )
 
         # Kombiniere das Balken- und Liniendiagramm
@@ -71,7 +73,7 @@ if data is not None and not data.empty:
             y='independent'  # Separate Skalen für Kundentakt und Bearbeitungszeit
         ).properties(
             width=600,
-            height=300
+            height=400
         )
 
         st.altair_chart(combined_chart, use_container_width=True)

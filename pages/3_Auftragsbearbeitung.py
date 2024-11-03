@@ -10,7 +10,7 @@ st.markdown("# Auftrag abschließen ✏️")
 st.sidebar.markdown("# Auftrag abschließen ✏️")
 st.write("Qualitätskontrolle und Versandt")
 
-# Datenbank-Datei für Werkzeugnisinformationen im JSON-Format
+# Datenbank-Dateien im JSON-Format
 werkzeugnis_database_filename = "werkzeugnis_database.json"
 bestellungen_database_filename = "bestellungen_database.json"
 
@@ -57,15 +57,28 @@ def save_to_csv(data):
         csv_writer = csv.writer(csvfile)
         csv_writer.writerow(new_row)
 
-# Funktion zum Laden der CSV-Datei und Anzeige der Tabelle
+# Funktion zur strukturierten Anzeige des CSV-DataFrames in Streamlit
 def display_csv():
     filename = "bearbeitsungsstatus.csv"
     if os.path.isfile(filename):
         df = pd.read_csv(filename, encoding='ISO-8859-1')
-        st.write("Aktualisierte Bearbeitungsstatus-Tabelle:")
-        st.dataframe(df)
+        st.markdown("## Bearbeitungsstatus der abgeschlossenen Aufträge")
+        st.write("Hier sehen Sie die aktuellen Aufträge, die abgeschlossen wurden und deren Bearbeitungsstatus.")
+        
+        # Formatierte Anzeige des DataFrames
+        st.dataframe(
+            df.style.set_properties(
+                **{
+                    'text-align': 'left',
+                    'font-size': '12pt'
+                }
+            ).set_table_styles(
+                [{'selector': 'th', 'props': [('font-size', '14pt'), ('text-align', 'left')]}]
+            ),
+            use_container_width=True
+        )
     else:
-        st.write("Keine Daten zum Anzeigen.")
+        st.warning("Die Datei 'bearbeitsungsstatus.csv' wurde nicht gefunden oder enthält keine Daten.")
 
 # Funktion für die Zeitdifferenzberechnung
 def timedifference(current_datetime):

@@ -6,34 +6,26 @@ import os
 # CSV-Datei
 CSV_FILE = "bearbeitsungsstatus.csv"
 
-# Erwartete Spaltennamen in der CSV-Datei
-EXPECTED_COLUMNS = ["Kunde", "Auftragsnummer", "Bestelldatum Uhrzeit", "Aktuelle Dauer und Uhrzeit", 
-                    "Zeitdifferenz", "current varianten", "selected quality", "Kundentakt"]
+# Erwartete Spaltennamen in der CSV-Datei (normalisiert)
+EXPECTED_COLUMNS = ["kunde", "auftragsnummer", "bestelldatum uhrzeit", "aktuelle dauer und uhrzeit", 
+                    "zeitdifferenz", "current varianten", "selected quality", "kundentakt"]
 
-# Funktion zum Laden und Überprüfen der CSV-Datei
+# Funktion zum Laden und Bereinigen der CSV-Datei
 def load_data():
     try:
         if os.path.isfile(CSV_FILE):
             # Laden der CSV-Datei
             data = pd.read_csv(CSV_FILE, encoding='ISO-8859-1')
             
-            # Zeigen Sie die tatsächlichen Spaltennamen an, um Abweichungen zu überprüfen
-            st.write("Geladene Spalten:", data.columns.tolist())
-            
+            # Normalisieren der Spaltennamen, um Abweichungen zu korrigieren
+            data.columns = [col.strip().lower() for col in data.columns]
+            st.write("Geladene Spalten nach Bereinigung:", data.columns.tolist())
+
             # Überprüfen, ob alle erwarteten Spalten vorhanden sind
             missing_columns = [col for col in EXPECTED_COLUMNS if col not in data.columns]
             if missing_columns:
                 st.warning(f"Die CSV-Datei hat fehlende oder abweichende Spalten: {missing_columns}")
             
-            # Benennen Sie Spalten um, falls die CSV-Datei eine abweichende Schreibweise hat
-            # Beispiel: Spaltennamen bereinigen, um sicherzustellen, dass sie passen
-            column_rename_map = {
-                "Kunde": "Kunde",
-                "Kundentakt": "Kundentakt",
-                "Zeitdifferenz": "Zeitdifferenz"
-            }
-            data.rename(columns=column_rename_map, inplace=True)
-
             return data
         else:
             st.warning(f"Die Datei '{CSV_FILE}' wurde nicht gefunden.")
@@ -52,11 +44,11 @@ if data is not None and not data.empty:
     st.dataframe(data, use_container_width=True)
 
     # Überprüfe, ob die erforderlichen Spalten für das Diagramm vorhanden sind
-    if all(col in data.columns for col in ["Kunde", "Kundentakt", "Zeitdifferenz"]):
+    if all(col in data.columns for col in ["kunde", "kundentakt", "zeitdifferenz"]):
         # Erstelle ein Balkendiagramm mit Altair, das die Aufträge nach Kundentakt und Bearbeitungszeit visualisiert
         chart = alt.Chart(data).mark_bar().encode(
-            x=alt.X('Kunde:N', title='Kunde'),
-            y=alt.Y('Kundentakt:Q', title='Kundentakt'),
+            x=alt.X('kunde:N', title='Kunde'),
+            y=alt.Y('kundentakt:Q', title='Kundentakt'),
             color=alt.value('steelblue')
         ).properties(
             width=600,
@@ -65,8 +57,8 @@ if data is not None and not data.empty:
 
         # Kombiniere das Diagramm für Kundentakt mit Bearbeitungszeit
         bearbeitung_chart = alt.Chart(data).mark_bar(color='orange').encode(
-            x=alt.X('Kunde:N', title='Kunde'),
-            y=alt.Y('Zeitdifferenz:Q', title='Bearbeitungszeit (Sekunden)')
+            x=alt.X('kunde:N', title='Kunde'),
+            y=alt.Y('zeitdifferenz:Q', title='Bearbeitungszeit (Sekunden)')
         ).properties(
             width=600,
             height=300

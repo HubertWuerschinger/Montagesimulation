@@ -10,16 +10,7 @@ st.markdown("# Auftrag abschließen ✏️")
 st.sidebar.markdown("# Auftrag abschließen ✏️")
 st.write("Qualitätskontrolle und Versandt")
 
-# Funktion zum Ermitteln der höchsten bisher verwendeten Werkzeugnisnummer
-def get_highest_werkzeugnis_num(data):
-    if not data:
-        return 0
-    return max(int(entry["Werkzeugnisnummer"]) for entry in data)
-
-# Datenbank-Datei für Werkzeugnisinformationen im JSON-Format
-werkzeugnis_database_filename = "werkzeugnis_database.json"
-
-# Laden der bestehenden Werkzeugnisdaten aus der JSON-Datei
+# Funktion zum Laden der bestehenden Werkzeugnisdaten aus der JSON-Datei
 def load_existing_data(filename):
     try:
         with open(filename, "r") as file:
@@ -65,75 +56,79 @@ def display_csv():
     else:
         st.write("Keine Daten zum Anzeigen.")
 
-existing_data = load_existing_data(werkzeugnis_database_filename)
-
-# Automatisches Einfügen des ausgewählten Bestelldatums und der Uhrzeit
+# Laden der JSON-Daten für Bestellungen
 bestellungen_database_filename = "bestellungen_database.json"
 bestellungen_data = load_existing_data(bestellungen_database_filename)
 
-# Erstellen einer Liste von Optionen für die selectbox mit Auftragsdatum und Kundenname
-selectbox_options = [f"{entry['Bestelldatum und Uhrzeit']} - {entry['Kunde']}" for entry in bestellungen_data]
+# Überprüfen, ob `bestellungen_data` Daten enthält
+if bestellungen_data:
+    # Erstellen einer Liste von Optionen für die selectbox mit Auftragsdatum und Kundenname
+    selectbox_options = [f"{entry['Bestelldatum und Uhrzeit']} - {entry['Kunde']}" for entry in bestellungen_data]
 
-# Lassen Sie den Benutzer auswählen
-selected_option = st.selectbox("Bestellung:", selectbox_options, 0)  # 0 ist der Standardindex
+    # Lassen Sie den Benutzer auswählen
+    selected_option = st.selectbox("Bestellung:", selectbox_options, 0)
 
-# Extrahieren von Auftragsdatum und Kundenname aus der ausgewählten Option
-selected_index = selectbox_options.index(selected_option)
-selected_datetime = bestellungen_data[selected_index]
-current_datetime = selected_datetime["Bestelldatum und Uhrzeit"]
-current_Kunde = selected_datetime["Kunde"]
+    # Überprüfen, ob `selected_option` gültig ist, bevor wir fortfahren
+    if selected_option in selectbox_options:
+        # Extrahieren von Auftragsdatum und Kundenname aus der ausgewählten Option
+        selected_index = selectbox_options.index(selected_option)
+        selected_datetime = bestellungen_data[selected_index]
+        current_datetime = selected_datetime["Bestelldatum und Uhrzeit"]
+        current_Kunde = selected_datetime["Kunde"]
 
-# Restliche Daten extrahieren
-current_Sonderwunsch = selected_datetime.get("Sonderwunsch", "N/A")
-current_Varianten = selected_datetime.get("Variante nach Bestellung", "N/A")
-current_Kundentakt = selected_datetime.get("Kundentakt", "N/A")
+        # Restliche Daten extrahieren
+        current_Sonderwunsch = selected_datetime.get("Sonderwunsch", "N/A")
+        current_Varianten = selected_datetime.get("Variante nach Bestellung", "N/A")
+        current_Kundentakt = selected_datetime.get("Kundentakt", "N/A")
 
-st.write(f"Bestellung vom: {current_datetime}")
+        st.write(f"Bestellung vom: {current_datetime}")
+        st.write("Varianten:")
+        st.write("Kundenvariante:", current_Varianten)
+        sonderwunsch = st.text_input("Sonderwunsch", current_Sonderwunsch)
 
-st.write("Varianten:")
-st.write("Kundenvariante:", current_Varianten)
-sonderwunsch = st.text_input("Sonderwunsch", current_Sonderwunsch)
+        # Qualitätsprüfung
+        st.write("Qualitätsprüfung:")
+        pruefungen = ["Montage", "Oberfläche"]
+        qualitaet = ["i.O", "ni.O"]
+        selected_quality = {}
 
-# Qualitätsprüfung
-st.write("Qualitätsprüfung:")
-pruefungen = ["Montage", "Oberfläche"]
-qualitaet = ["i.O", "ni.O"]
-selected_quality = {}
+        for pruefung in pruefungen:
+            st.write(pruefung)
+            selected_q = st.radio(f"Auswahl {pruefung}", qualitaet)
+            if selected_q:
+                selected_quality[pruefung] = selected_q
 
-for pruefung in pruefungen:
-    st.write(pruefung)
-    selected_q = st.radio(f"Auswahl {pruefung}", qualitaet)
-    if selected_q:
-        selected_quality[pruefung] = selected_q
+        # Funktion für die Zeitdifferenz
+        def timedifference(current_datetime):
+            bestelldatum = datetime.datetime.strptime(current_datetime, "%Y-%m-%d %H:%M:%S")
+            now = datetime.datetime.now()
+            time_difference = (now - bestelldatum).total_seconds()
+            return int(time_difference)
 
-# Hinzufügen der Funktion für die Zeitdifferenz
-def timedifference(current_datetime):
-    bestelldatum = datetime.datetime.strptime(current_datetime, "%Y-%m-%d %H:%M:%S")
-    now = datetime.datetime.now()
-    time_difference = (now - bestelldatum).total_seconds()
-    return int(time_difference)
+        # Schaltfläche, um das Werkzeugnis zu generieren
+        if st.button("Auftrag abgeschlossen und Bestellung zum Kunden verschickt"):
+            werkzeugnis_info = {
+                "Bestelldatum": current_datetime,
+                "Kunde": current_Kunde,
+                "Sonderwunsch": sonderwunsch,
+                "Variante nach Bestellung": current_Varianten,
+                "Qualitätsprüfung": selected_quality,
+                "Kundentakt": current_Kundentakt
+            }
+            existing_data = load_existing_data(werkzeugnis_database_filename)
+            existing_data.append(werkzeugnis_info)
 
-# Schaltfläche, um das Werkzeugnis zu generieren
-if st.button("Auftrag abgeschlossen und Bestellung zum Kunden verschickt"):
-    werkzeugnis_info = {
-        "Bestelldatum": current_datetime,
-        "Kunde": current_Kunde,
-        "Sonderwunsch": sonderwunsch,
-        "Variante nach Bestellung": current_Varianten,
-        "Qualitätsprüfung": selected_quality,
-        "Kundentakt": current_Kundentakt
-    }
-    existing_data.append(werkzeugnis_info)  # Hinzufügen der neuen Daten zu den vorhandenen Daten
+            with open(werkzeugnis_database_filename, "w") as db:
+                for entry in existing_data:
+                    db.write(json.dumps(entry) + "\n")
 
-    with open(werkzeugnis_database_filename, "w") as db:
-        for entry in existing_data:
-            db.write(json.dumps(entry) + "\n")
+            time_diff = timedifference(current_datetime)  # Berechnen der Zeitdifferenz
+            st.write(f"Der Kundenauftrag wurde in {time_diff} Sekunden bearbeitet")
+            time.sleep(1)
 
-    time_diff = timedifference(current_datetime)  # Berechnen der Zeitdifferenz
-    st.write(f"Der Kundenauftrag wurde in {time_diff} Sekunden bearbeitet")
-    time.sleep(1)
+            save_to_csv(existing_data)
 
-    save_to_csv(existing_data)
-
-    # Zeige die aktualisierte CSV-Datei als Tabelle an
-    display_csv()
+            # Zeige die aktualisierte CSV-Datei als Tabelle an
+            display_csv()
+else:
+    st.info("Es sind derzeit keine Bestellungen vorhanden.")

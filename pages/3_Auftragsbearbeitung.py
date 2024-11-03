@@ -49,7 +49,7 @@ def save_to_csv(data):
     new_row = [kunde, auftragsnummer, bestelldatum_uhrzeit, aktuelle_dauer_uhrzeit, zeitdifferenz, current_varianten, f"Montage: {selected_quality_montage}, Oberfläche: {selected_quality_oberflaeche}", current_Kundentakt]
 
     # Schreibe die Daten in die CSV-Datei, füge den Header nur hinzu, wenn die Datei neu erstellt wird
-    with open(filename, 'a', newline='') as csvfile:
+    with open(filename, 'a', newline='', encoding='ISO-8859-1') as csvfile:
         csv_writer = csv.writer(csvfile)
         if not file_exists:
             csv_writer.writerow(header)  # Schreibe Header nur, wenn die Datei neu ist

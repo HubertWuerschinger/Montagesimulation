@@ -1,10 +1,11 @@
 import streamlit as st
 import datetime
 import json
+from streamlit.runtime.scriptrunner import RerunException
 
 st.markdown("# Bestellen 🛒")
 st.sidebar.markdown("# Bestellen 🛒")
-#test
+
 # Datenbank-Datei für Werkzeugnisinformationen im JSON-Format
 database_filename = "bestellungen_database.json"
 
@@ -18,9 +19,6 @@ def load_existing_data(filename):
         return []
 
 existing_data = load_existing_data(database_filename)
-
-# Seitentitel
-#st.title("Bestellung aufgeben")
 
 # Kunde
 kunde = st.text_input("Kundenname")
@@ -44,7 +42,6 @@ varianten_farben = {
     "Container 2": ["Grün", "Gelb", "Blau"],
     "Container 3": ["Grün", "Gelb", "Blau"],
     "Container 4": ["Grün", "Gelb", "Blau"]
-    
 }
 
 selected_variants = {}
@@ -53,8 +50,6 @@ selected_variants = {}
 columns = st.columns(6)
 
 for variante, farben in varianten_farben.items():
-    #with columns[0]:
-      #  st.write(variante)
     with columns[1]:
         selected_color = st.radio(f"Auswahl {variante}", farben)
         if selected_color:
@@ -65,7 +60,6 @@ sonderwunsch = st.text_input("Sonderwunsch", "")
 
 # Kundentakt
 Kundentakt = st.text_input("Kundentakt", "")
-
 
 # Schaltfläche, um Bestellung abzuschicken
 if st.button("Bestellung abschicken"):
@@ -86,5 +80,5 @@ if st.button("Bestellung abschicken"):
             db.write(json.dumps(entry) + "\n")
 
     st.write("Die Bestellung wurde abgeschickt")
-    # Laden der bestehenden Werkzeugnisdaten aus der JSON-Datei
-    st.experimental_rerun()
+    # Neuladen der App
+    raise RerunException

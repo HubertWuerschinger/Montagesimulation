@@ -26,30 +26,37 @@ if data is not None:
     # Anzeige der Tabelle mit Spaltennamen als Header
     st.dataframe(data, use_container_width=True)
 
-    # Erstelle ein Balkendiagramm mit Altair, das die Aufträge nach Kundentakt und Bearbeitungszeit visualisiert
-    chart = alt.Chart(data).mark_bar().encode(
-        x=alt.X('Kunde:N', title='Kunde'),
-        y=alt.Y('Kundentakt:Q', title='Kundentakt'),
-        color=alt.value('steelblue')
-    ).properties(
-        width=600,
-        height=300
-    )
+    # Prüfe die ersten Zeilen der Daten und zeige sie zur Überprüfung an
+    st.write("Datenvorschau:")
+    st.write(data.head())
 
-    # Kombiniere das Diagramm für Kundentakt mit Bearbeitungszeit
-    bearbeitung_chart = alt.Chart(data).mark_bar(color='orange').encode(
-        x=alt.X('Kunde:N', title='Kunde'),
-        y=alt.Y('Zeitdifferenz:Q', title='Bearbeitungszeit (Sekunden)')
-    ).properties(
-        width=600,
-        height=300
-    )
+    # Überprüfe, ob die erforderlichen Spalten vorhanden sind
+    if "Kunde" in data.columns and "Kundentakt" in data.columns and "Zeitdifferenz" in data.columns:
+        # Erstelle ein Balkendiagramm mit Altair, das die Aufträge nach Kundentakt und Bearbeitungszeit visualisiert
+        chart = alt.Chart(data).mark_bar().encode(
+            x=alt.X('Kunde:N', title='Kunde'),
+            y=alt.Y('Kundentakt:Q', title='Kundentakt'),
+            color=alt.value('steelblue')
+        ).properties(
+            width=600,
+            height=300
+        )
 
-    combined_chart = alt.layer(chart, bearbeitung_chart).resolve_scale(
-        y='independent'  # Separate Skalen für Kundentakt und Bearbeitungszeit
-    )
+        # Kombiniere das Diagramm für Kundentakt mit Bearbeitungszeit
+        bearbeitung_chart = alt.Chart(data).mark_bar(color='orange').encode(
+            x=alt.X('Kunde:N', title='Kunde'),
+            y=alt.Y('Zeitdifferenz:Q', title='Bearbeitungszeit (Sekunden)')
+        ).properties(
+            width=600,
+            height=300
+        )
 
-    st.altair_chart(combined_chart, use_container_width=True)
+        combined_chart = alt.layer(chart, bearbeitung_chart).resolve_scale(
+            y='independent'  # Separate Skalen für Kundentakt und Bearbeitungszeit
+        )
 
+        st.altair_chart(combined_chart, use_container_width=True)
+    else:
+        st.warning("Die erforderlichen Spalten 'Kunde', 'Kundentakt' und 'Zeitdifferenz' sind nicht in den Daten vorhanden.")
 else:
     st.info("Es gibt derzeit keine abgeschlossenen Aufträge, die angezeigt werden können.")

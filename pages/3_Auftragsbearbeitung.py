@@ -23,19 +23,9 @@ def load_existing_data(filename):
     except (FileNotFoundError, json.JSONDecodeError):
         return []
 
-# Funktion zum Speichern der Daten in einer CSV-Datei
+# Funktion zum Speichern der Daten in einer CSV-Datei (Header wird vorausgesetzt)
 def save_to_csv(data):
     filename = "bearbeitsungsstatus.csv"
-    header = ["Kunde", "Auftragsnummer", "Bestelldatum Uhrzeit", "Aktuelle Dauer und Uhrzeit", 
-              "Zeitdifferenz", "current varianten", "selected quality", "Kundentakt"]
-    
-    # Überprüfen, ob die Datei existiert und ob der Header vorhanden ist
-    file_exists = os.path.isfile(filename)
-    if not file_exists:
-        # Schreibe den Header, wenn die Datei neu erstellt wird
-        with open(filename, 'w', newline='', encoding='ISO-8859-1') as csvfile:
-            csv_writer = csv.writer(csvfile)
-            csv_writer.writerow(header)
     
     # Füge die neue Zeile mit den aktuellen Daten hinzu
     kunde = data[0]["Kunde"]

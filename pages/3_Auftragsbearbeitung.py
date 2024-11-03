@@ -9,6 +9,7 @@ import os
 st.markdown("# Auftrag abschließen ✏️")
 st.sidebar.markdown("# Auftrag abschließen ✏️")
 st.write("Qualitätskontrolle und Versandt")
+
 # Funktion zum Ermitteln der höchsten bisher verwendeten Werkzeugnisnummer
 def get_highest_werkzeugnis_num(data):
     if not data:
@@ -27,16 +28,13 @@ def load_existing_data(filename):
     except (FileNotFoundError, json.JSONDecodeError):
         return []
 
-
-
-
 # Funktion zum Speichern der Daten in einer CSV-Datei
 def save_to_csv(data):
     filename = "bearbeitsungsstatus.csv"
     header = ["Kunde", "Auftragsnummer", "Bestelldatum Uhrzeit", "Aktuelle Dauer und Uhrzeit", "Zeitdifferenz", "current varianten", "selected quality", "Kundentakt"]
     rows = []
 
-    # Wenn die Datei existiert, laden Sie die vorhandigen Daten
+    # Wenn die Datei existiert, laden Sie die vorhandenen Daten
     if os.path.isfile(filename):
         with open(filename, 'r', newline='') as csvfile:
             csv_reader = csv.reader(csvfile)
@@ -63,12 +61,8 @@ def save_to_csv(data):
         # Schreibe die Kopfzeile
         csv_writer.writerow(header)
         csv_writer.writerows(rows)
-# ...
-
 
 existing_data = load_existing_data(werkzeugnis_database_filename)
-
-# Seitentitel
 
 # Automatisches Einfügen des ausgewählten Bestelldatums und der Uhrzeit
 bestellungen_database_filename = "bestellungen_database.json"
@@ -93,16 +87,9 @@ current_Kundentakt = selected_datetime.get("Kundentakt", "N/A")
 
 st.write(f"Bestellung vom: {current_datetime}")
 
-
-# Kundenname
-#last_customer_name = existing_data[-1]["Kunde"] if existing_data else "Bitte Kundennamen eingeben"
-#kunde = st.text_input("Kunde", current_Kunde)
-
-# Weitere Elemente
 st.write("Varianten:")
 st.write("Kundenvariante:", current_Varianten)
 sonderwunsch = st.text_input("Sonderwunsch", current_Sonderwunsch)
-
 
 # Qualitätsprüfung
 st.write("Qualitätsprüfung:")
@@ -125,7 +112,6 @@ def timedifference(current_datetime):
 
 # Schaltfläche, um das Werkzeugnis zu generieren
 if st.button("Auftrag abgeschlossen und Bestellung zum Kunden verschickt"):
-    # Speichern der Werkzeugnisinformationen in der Datenbank als separates JSON-Objekt pro Zeile
     werkzeugnis_info = {
         "Bestelldatum": current_datetime,
         "Kunde": current_Kunde,
@@ -143,16 +129,14 @@ if st.button("Auftrag abgeschlossen und Bestellung zum Kunden verschickt"):
     time_diff = timedifference(current_datetime)  # Berechnen der Zeitdifferenz
     st.write(f"Der Kundenauftrag wurde in {time_diff} Sekunden bearbeitet")
     time.sleep(1)
-    # Erstellen eines DataFrames aus den Werkzeugnisdaten
-    df = pd.DataFrame(existing_data)
 
-    # Setzen des Index auf "Kunde"
+    df = pd.DataFrame(existing_data)
     df.set_index("Kunde", inplace=True)
 
-    # Anzeigen des DataFrames
-    #st.write("Alle Werkzeugnisse:")
-    #st.dataframe(df)
-    # Speichern der Daten in der CSV-Datei
     save_to_csv(existing_data)
-    # Laden der bestehenden Werkzeugnisdaten aus der JSON-Datei
-    st.experimental_rerun()
+
+    # Nutze `st.query_params()` anstelle von `st.experimental_rerun()`
+    try:
+        st.query_params()
+    except Exception as e:
+        st.write("Warnung: Die Abfrageparameter konnten nicht aktualisiert werden.")

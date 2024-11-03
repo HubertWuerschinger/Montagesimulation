@@ -26,6 +26,10 @@ def load_data():
             if missing_columns:
                 st.warning(f"Die CSV-Datei hat fehlende oder abweichende Spalten: {missing_columns}")
             
+            # Konvertiere 'zeitdifferenz' in numerischen Datentyp, falls nötig
+            if 'zeitdifferenz' in data.columns:
+                data['zeitdifferenz'] = pd.to_numeric(data['zeitdifferenz'], errors='coerce')
+
             return data
         else:
             st.warning(f"Die Datei '{CSV_FILE}' wurde nicht gefunden.")
@@ -55,7 +59,7 @@ if data is not None and not data.empty:
             height=300
         )
 
-        # Kombiniere das Diagramm für Kundentakt mit Bearbeitungszeit
+        # Erstelle ein separates Balkendiagramm für die Bearbeitungszeit (Zeitdifferenz)
         bearbeitung_chart = alt.Chart(data).mark_bar(color='orange').encode(
             x=alt.X('kunde:N', title='Kunde'),
             y=alt.Y('zeitdifferenz:Q', title='Bearbeitungszeit (Sekunden)')
@@ -64,6 +68,7 @@ if data is not None and not data.empty:
             height=300
         )
 
+        # Kombiniere die beiden Diagramme
         combined_chart = alt.layer(chart, bearbeitung_chart).resolve_scale(
             y='independent'  # Separate Skalen für Kundentakt und Bearbeitungszeit
         )

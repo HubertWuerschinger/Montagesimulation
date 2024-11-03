@@ -3,9 +3,12 @@ import json
 import time
 import pandas as pd
 
-# Setze Streamlit-Option für die Spaltenbreite
-#st.set_option('deprecation.showPyplotGlobalUse', False)
-st.set_option('deprecation.showfileUploaderEncoding', False)
+# Setze Streamlit-Optionen in try-except-Blöcken, um Fehler durch veraltete Optionen zu vermeiden
+try:
+    # st.set_option('deprecation.showPyplotGlobalUse', False)  # Optional: für zukünftige Updates anpassbar
+    st.set_option('deprecation.showfileUploaderEncoding', False)
+except st.StreamlitAPIException as e:
+    st.write(f"Warnung: Eine Konfigurationsoption wird nicht unterstützt: {e}")
 
 st.markdown("# Aufträge 🚀")
 st.sidebar.markdown("# Aufträge 🚀")
@@ -21,8 +24,6 @@ def cooling_highlight(val):
     }
     return f'background-color: {colors.get(val, "white")}'
 
-
-
 def display_results():
     # Laden der Werkzeugnisdaten aus der JSON-Datei
     bestellungen_data = []
@@ -34,9 +35,7 @@ def display_results():
     # Wenn Daten vorhanden sind, diese in einer Tabelle anzeigen
     if bestellungen_data:
         # Erstellen eines leeren DataFrames mit den erforderlichen Spalten
-        
         df = pd.DataFrame(columns=["Bestelldatum und Uhrzeit:", "Kunde:", "Auftragsnummer", "Sonderwunsch:", "Führerhaus:", "Sidepipes:", "Container 1:", "Container 2:", "Container 3:", "Container 4:", "Kundentakt"])
-        
         
         for idx, entry in enumerate(bestellungen_data, start=1):
             df.loc[idx] = [
@@ -53,14 +52,12 @@ def display_results():
                 entry["Kundentakt"]
             ]
         
-        st.dataframe(df.T, use_container_width= True)  # Transponieren des DataFrames und Anzeigen als Tabelle
+        st.dataframe(df.T, use_container_width=True)  # Transponieren des DataFrames und Anzeigen als Tabelle
         
-
-        #bestellungen_database_filename = "bestellungen_database.json"
-        #bestellungen_data = display_results(bestellungen_database_filename)
         df["Kundentakt"] = df["Kundentakt"].apply(int)
         
         st.write("Wenn für bestimmte Bestandteile keine Farbangaben gemacht wurden, dann können diese frei gewählt werden")
+        
         # Countdown-Timer für Kundentakt
         timer_placeholder = st.empty()
         for i in range(df["Kundentakt"].values[0], -1, -1):
@@ -76,4 +73,9 @@ def display_results():
 
 if __name__ == '__main__':
     display_results()
-st.experimental_rerun()  # Seite neu laden
+
+# Verwende `st.experimental_set_query_params` mit einer Abfrage, um die Seite neu zu laden
+try:
+    st.experimental_set_query_params()
+except st.StreamlitAPIException as e:
+    st.write(f"Warnung: Experimentelle Funktion nicht unterstützt: {e}")

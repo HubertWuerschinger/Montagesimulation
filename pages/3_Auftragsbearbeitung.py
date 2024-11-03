@@ -27,16 +27,18 @@ def load_existing_data(filename):
 def save_to_csv(selected_data):
     filename = "bearbeitsungsstatus.csv"
     
-    # Füge die neue Zeile mit den aktuellen Daten hinzu
-    kunde = selected_data["Kunde"]
+    # Sicherstellen, dass die benötigten Felder vorhanden sind
+    kunde = selected_data.get("Kunde", "Unbekannt")
     auftragsnummer = selected_data.get("Auftragsnummer", "N/A")
-    bestelldatum_uhrzeit = selected_data["Bestelldatum"]
+    bestelldatum_uhrzeit = selected_data.get("Bestelldatum und Uhrzeit", "N/A")
     aktuelle_dauer_uhrzeit = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    zeitdifferenz = timedifference(selected_data["Bestelldatum"])
-    current_varianten = selected_data["Variante nach Bestellung"]
-    selected_quality_montage = selected_data["Qualitätsprüfung"].get("Montage", "N/A")
-    selected_quality_oberflaeche = selected_data["Qualitätsprüfung"].get("Oberfläche", "N/A")
-    current_Kundentakt = selected_data["Kundentakt"]
+    zeitdifferenz = timedifference(bestelldatum_uhrzeit)
+    current_varianten = selected_data.get("Variante nach Bestellung", "N/A")
+    selected_quality_montage = selected_data.get("Qualitätsprüfung", {}).get("Montage", "N/A")
+    selected_quality_oberflaeche = selected_data.get("Qualitätsprüfung", {}).get("Oberfläche", "N/A")
+    current_Kundentakt = selected_data.get("Kundentakt", "N/A")
+    
+    # Neue Zeile für die CSV-Datei
     new_row = [kunde, auftragsnummer, bestelldatum_uhrzeit, aktuelle_dauer_uhrzeit, 
                zeitdifferenz, current_varianten, 
                f"Montage: {selected_quality_montage}, Oberfläche: {selected_quality_oberflaeche}", 
@@ -71,11 +73,15 @@ def display_csv():
         st.warning("Die Datei 'bearbeitsungsstatus.csv' wurde nicht gefunden oder enthält keine Daten.")
 
 # Funktion für die Zeitdifferenzberechnung
-def timedifference(current_datetime):
-    bestelldatum = datetime.datetime.strptime(current_datetime, "%Y-%m-%d %H:%M:%S")
-    now = datetime.datetime.now()
-    time_difference = (now - bestelldatum).total_seconds()
-    return int(time_difference)
+def timedifference(bestelldatum_uhrzeit):
+    try:
+        bestelldatum = datetime.datetime.strptime(bestelldatum_uhrzeit, "%Y-%m-%d %H:%M:%S")
+        now = datetime.datetime.now()
+        time_difference = (now - bestelldatum).total_seconds()
+        return int(time_difference)
+    except ValueError:
+        st.warning("Ungültiges Datum/Uhrzeit-Format für die Berechnung der Zeitdifferenz.")
+        return "N/A"
 
 # Laden der JSON-Daten für Bestellungen
 bestellungen_data = load_existing_data(bestellungen_database_filename)
@@ -93,8 +99,8 @@ if bestellungen_data:
         # Extrahieren von Auftragsdatum und Kundenname aus der ausgewählten Option
         selected_index = selectbox_options.index(selected_option)
         selected_data = bestellungen_data[selected_index]
-        current_datetime = selected_data["Bestelldatum und Uhrzeit"]
-        current_Kunde = selected_data["Kunde"]
+        current_datetime = selected_data.get("Bestelldatum und Uhrzeit", "N/A")
+        current_Kunde = selected_data.get("Kunde", "Unbekannt")
 
         # Restliche Daten extrahieren
         current_Sonderwunsch = selected_data.get("Sonderwunsch", "N/A")

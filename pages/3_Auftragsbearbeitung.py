@@ -32,15 +32,9 @@ def load_existing_data(filename):
 def save_to_csv(data):
     filename = "bearbeitsungsstatus.csv"
     header = ["Kunde", "Auftragsnummer", "Bestelldatum Uhrzeit", "Aktuelle Dauer und Uhrzeit", "Zeitdifferenz", "current varianten", "selected quality", "Kundentakt"]
-    rows = []
-
-    # Wenn die Datei existiert, laden Sie die vorhandenen Daten
-    if os.path.isfile(filename):
-        with open(filename, 'r', newline='') as csvfile:
-            csv_reader = csv.reader(csvfile)
-            header = next(csv_reader)  # Header-Zeile überspringen
-            for row in csv_reader:
-                rows.append(row)
+    
+    # Überprüfen, ob die Datei existiert
+    file_exists = os.path.isfile(filename)
 
     # Füge die neue Zeile hinzu
     kunde = data[0]["Kunde"]
@@ -53,14 +47,23 @@ def save_to_csv(data):
     selected_quality_oberflaeche = data[0]["Qualitätsprüfung"].get("Oberfläche", "N/A")
     current_Kundentakt = data[0]["Kundentakt"]
     new_row = [kunde, auftragsnummer, bestelldatum_uhrzeit, aktuelle_dauer_uhrzeit, zeitdifferenz, current_varianten, f"Montage: {selected_quality_montage}, Oberfläche: {selected_quality_oberflaeche}", current_Kundentakt]
-    rows.append(new_row)
 
-    # Schreibe die Daten zurück in die CSV-Datei
-    with open(filename, 'w', newline='') as csvfile:
+    # Schreibe die Daten in die CSV-Datei, füge den Header nur hinzu, wenn die Datei neu erstellt wird
+    with open(filename, 'a', newline='') as csvfile:
         csv_writer = csv.writer(csvfile)
-        # Schreibe die Kopfzeile
-        csv_writer.writerow(header)
-        csv_writer.writerows(rows)
+        if not file_exists:
+            csv_writer.writerow(header)  # Schreibe Header nur, wenn die Datei neu ist
+        csv_writer.writerow(new_row)
+
+# Funktion zum Laden der CSV-Datei und Anzeige der Tabelle
+def display_csv():
+    filename = "bearbeitsungsstatus.csv"
+    if os.path.isfile(filename):
+        df = pd.read_csv(filename, encoding='ISO-8859-1')
+        st.write("Aktualisierte Bearbeitungsstatus-Tabelle:")
+        st.dataframe(df)
+    else:
+        st.write("Keine Daten zum Anzeigen.")
 
 existing_data = load_existing_data(werkzeugnis_database_filename)
 
@@ -130,13 +133,7 @@ if st.button("Auftrag abgeschlossen und Bestellung zum Kunden verschickt"):
     st.write(f"Der Kundenauftrag wurde in {time_diff} Sekunden bearbeitet")
     time.sleep(1)
 
-    df = pd.DataFrame(existing_data)
-    df.set_index("Kunde", inplace=True)
-
     save_to_csv(existing_data)
 
-    # Nutze `st.query_params()` anstelle von `st.experimental_rerun()`
-    try:
-        st.query_params()
-    except Exception as e:
-        st.write("Warnung: Die Abfrageparameter konnten nicht aktualisiert werden.")
+    # Zeige die aktualisierte CSV-Datei als Tabelle an
+    display_csv()

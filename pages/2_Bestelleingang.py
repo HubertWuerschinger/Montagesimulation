@@ -7,8 +7,8 @@ import pandas as pd
 try:
     # st.set_option('deprecation.showPyplotGlobalUse', False)  # Optional: für zukünftige Updates anpassbar
     st.set_option('deprecation.showfileUploaderEncoding', False)
-except st.StreamlitAPIException as e:
-    st.write(f"Warnung: Eine Konfigurationsoption wird nicht unterstützt: {e}")
+except Exception as e:
+    st.write("Warnung: Eine Konfigurationsoption wird nicht unterstützt und wurde übersprungen.")
 
 st.markdown("# Aufträge 🚀")
 st.sidebar.markdown("# Aufträge 🚀")
@@ -77,5 +77,5 @@ if __name__ == '__main__':
 # Verwende `st.experimental_set_query_params` mit einer Abfrage, um die Seite neu zu laden
 try:
     st.experimental_set_query_params()
-except st.StreamlitAPIException as e:
-    st.write(f"Warnung: Experimentelle Funktion nicht unterstützt: {e}")
+except Exception as e:
+    st.write("Warnung: Experimentelle Funktion wird nicht unterstützt und wurde übersprungen.")

@@ -10,6 +10,9 @@ st.markdown("# Auftrag abschließen ✏️")
 st.sidebar.markdown("# Auftrag abschließen ✏️")
 st.write("Qualitätskontrolle und Versandt")
 
+# Datenbank-Datei für Werkzeugnisinformationen im JSON-Format
+werkzeugnis_database_filename = "werkzeugnis_database.json"
+
 # Funktion zum Laden der bestehenden Werkzeugnisdaten aus der JSON-Datei
 def load_existing_data(filename):
     try:

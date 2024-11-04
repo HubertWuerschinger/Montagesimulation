@@ -72,15 +72,12 @@ def display_last_order():
     if df is not None:
         st.markdown("## Nächste Bestellung")
         
-        # Größere Schriftgröße für die Tabelle festlegen
-        styled_df = df.T.style.set_properties(**{
-            'font-size': '20pt',  # Vergrößerte Schriftgröße für die Zellen
-            'text-align': 'left'
-        }).set_table_styles([
-            {'selector': 'th', 'props': [('font-size', '22pt'), ('text-align', 'left')]}  # Größere Schrift für die Kopfzeilen
-        ])
+        # Größere Schriftgröße und benutzerdefinierte Schriftart für die Tabelle festlegen
+        styled_dataframe = df.T.style.set_properties(
+            **{'font-size': '18pt', 'font-family': 'Calibri', 'text-align': 'left'}
+        )
         
-        st.dataframe(styled_df, use_container_width=True)  # Transponierte Darstellung für kompakte Anzeige
+        st.dataframe(styled_dataframe)  # Transponierte Darstellung für kompakte Anzeige
 
         # Timer für den Kundentakt der Bestellung starten
         kundentakt = int(df["Kundentakt"].iloc[0])

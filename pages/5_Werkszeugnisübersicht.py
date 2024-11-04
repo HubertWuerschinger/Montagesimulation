@@ -2,13 +2,6 @@ import streamlit as st
 import json
 import pandas as pd
 
-# Setze Streamlit-Option für die Spaltenbreite
-st.set_option('deprecation.showPyplotGlobalUse', False)
-st.set_option('deprecation.showfileUploaderEncoding', False)
-
-# Contents of ~/my_app/main_page.py
-import streamlit as st
-
 st.markdown("# Werkzeugnisübersicht ⭐")
 st.sidebar.markdown("# Werkzeugnisübersicht ⭐")
 
@@ -18,39 +11,43 @@ database_filename = "werkzeugnis_database.json"
 def display_ampel_color(werkzeugnis_data):
     # Überprüfe, ob die Untereinträge "Montage" und "Oberfläche" in Ordnung sind
     is_ok = all(
-        item["Qualitätsprüfung"]["Montage"] == "i.O" and
-        item["Qualitätsprüfung"]["Oberfläche"] == "i.O"
+        item["Qualitätsprüfung"].get("Montage") == "i.O" and
+        item["Qualitätsprüfung"].get("Oberfläche") == "i.O"
         for item in werkzeugnis_data
     )
     
-    if is_ok:
-        ampel_color = "Grün"
-    else:
-        ampel_color = "Rot"
-    
-    return ampel_color
+    return "Grün" if is_ok else "Rot"
 
 def display_werkzeugnis_results():
     # Laden der Werkzeugnisdaten aus der JSON-Datei
     werkzeugnis_data = []
-    with open(database_filename, "r") as db:
-        for line in db:
-            werkzeugnis_info = json.loads(line)
-            werkzeugnis_data.append(werkzeugnis_info)
+    try:
+        with open(database_filename, "r") as db:
+            for line in db:
+                werkzeugnis_info = json.loads(line)
+                werkzeugnis_data.append(werkzeugnis_info)
+    except (FileNotFoundError, json.JSONDecodeError):
+        st.error("Die Datei konnte nicht geladen werden oder ist leer.")
+        return
 
     # Wenn Daten vorhanden sind, diese in einer Tabelle anzeigen
     if werkzeugnis_data:
         df = pd.DataFrame(werkzeugnis_data)
         df.set_index("Kunde", inplace=True)  # Setzen des Index auf "Kunde"
-        st.dataframe(df, use_container_width=True)
-        
+
+        # Größere Schriftgröße für die Tabelle festlegen
+        styled_df = df.style.set_properties(**{
+            'font-size': '14pt',
+            'font-family': 'Calibri'
+        })
+        st.dataframe(styled_df, use_container_width=True)
+
+        # Anzeige der Ampelgrafik je nach Qualitätsstatus
         ampel_color = display_ampel_color(werkzeugnis_data)
-        #st.write(f"Ampel: {ampel_color}")
-        
         if ampel_color == "Grün":
-            st.image("gruene_ampel.jpg")  # Hier musst du den Pfad zur grünen Ampelgrafik angeben
+            st.image("gruene_ampel.jpg", caption="Status: Alles in Ordnung")
         else:
-            st.image("rote_ampel.jpg")  # Hier musst du den Pfad zur roten Ampelgrafik angeben
+            st.image("rote_ampel.jpg", caption="Status: Überprüfung erforderlich")
     else:
         st.write("Keine Werkzeugnisdaten vorhanden.")
 

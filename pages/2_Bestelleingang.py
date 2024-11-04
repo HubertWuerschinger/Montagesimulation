@@ -2,27 +2,46 @@ import streamlit as st
 import json
 import time
 import pandas as pd
-import os
 
-# CSV-Dateiname
-CSV_FILE = "bearbeitsungsstatus.csv"
+# JSON-Datei für die Aufträge
+database_filename = "bestellungen_database.json"
 
-def load_last_order_from_csv():
-    """Lädt die letzte Zeile aus der CSV-Datei."""
+def load_last_order():
+    """Lädt die letzte Auftragszeile aus der JSON-Datei."""
     try:
-        if os.path.isfile(CSV_FILE):
-            df = pd.read_csv(CSV_FILE, encoding='ISO-8859-1')
-            if not df.empty:
-                last_order = df.iloc[-1]  # Letzte Zeile der CSV-Datei
+        with open(database_filename, "r") as db:
+            lines = db.readlines()
+            if lines:
+                last_order = json.loads(lines[-1])  # Nur die letzte Zeile laden
                 return last_order
-        else:
-            st.warning(f"Die Datei '{CSV_FILE}' wurde nicht gefunden.")
-    except pd.errors.EmptyDataError:
-        st.warning("Die CSV-Datei ist leer.")
+    except (FileNotFoundError, json.JSONDecodeError):
+        st.error("Die Datei konnte nicht geladen werden oder ist leer.")
     return None
 
+def create_order_dataframe(order_data):
+    """Erstellt einen DataFrame aus einem einzelnen Auftragsdatensatz."""
+    if not order_data:
+        return None
+
+    # DataFrame für die letzte Bestellung erstellen
+    df = pd.DataFrame([{
+        "Bestelldatum und Uhrzeit": order_data.get("Bestelldatum und Uhrzeit"),
+        "Kunde": order_data.get("Kunde"),
+        "Auftragsnummer": order_data.get("Auftragsnummer"),
+        "Sonderwunsch": order_data.get("Sonderwunsch"),
+        "Führerhaus": order_data.get("Variante nach Bestellung", {}).get("Führerhaus", "N/A"),
+        "Sidepipes": order_data.get("Variante nach Bestellung", {}).get("Sidepipes", "N/A"),
+        "Container 1": order_data.get("Variante nach Bestellung", {}).get("Container 1", "N/A"),
+        "Container 2": order_data.get("Variante nach Bestellung", {}).get("Container 2", "N/A"),
+        "Container 3": order_data.get("Variante nach Bestellung", {}).get("Container 3", "N/A"),
+        "Container 4": order_data.get("Variante nach Bestellung", {}).get("Container 4", "N/A"),
+        "Kundentakt": order_data.get("Kundentakt", 0)
+    }])
+    
+    return df
+
 def run_timer(kundentakt, kunde_name):
-    """Führt einen Countdown für den Kundentakt aus."""
+    """Führt einen Countdown für den Kundentakt der letzten Bestellung aus und lädt die Seite neu."""
     timer_placeholder = st.empty()
     for i in range(int(kundentakt), -1, -1):
         timer_placeholder.markdown(
@@ -31,26 +50,27 @@ def run_timer(kundentakt, kunde_name):
         )
         time.sleep(1)
     timer_placeholder.empty()
+    
+    # Nach Ablauf des Timers die Seite neu laden
+    st.experimental_rerun()
 
 def display_last_order():
-    """Zeigt die letzte Bestellung aus der CSV an und startet den Timer."""
-    last_order = load_last_order_from_csv()
-    if last_order is None:
+    """Zeigt die letzte Bestellung an und startet den Timer."""
+    last_order = load_last_order()
+    if not last_order:
         st.write("Keine Bestellungen vorhanden.")
         return
 
-    # Zeigt die letzte Bestellung in einem DataFrame-Format an
-    df = pd.DataFrame([last_order])
-    st.markdown("## Letzte Bestellung")
-    st.dataframe(df.T, use_container_width=True)
+    # DataFrame aus der letzten Bestellung erstellen und anzeigen
+    df = create_order_dataframe(last_order)
+    if df is not None:
+        st.markdown("## Letzte Bestellung")
+        st.dataframe(df.T, use_container_width=True)  # Transponierte Darstellung für kompakte Anzeige
 
-    # Timer für den Kundentakt der letzten Bestellung starten
-    kundentakt = int(last_order["Kundentakt"])
-    kunde_name = last_order["Kunde"]
-    run_timer(kundentakt, kunde_name)
-
-    # CSV-Datei erneut laden
-    display_last_order()
+        # Timer für den Kundentakt der letzten Bestellung starten
+        kundentakt = int(df["Kundentakt"].iloc[0])
+        kunde_name = df["Kunde"].iloc[0]
+        run_timer(kundentakt, kunde_name)
 
 if __name__ == '__main__':
     display_last_order()

@@ -3,25 +3,19 @@ import json
 import time
 import pandas as pd
 
-# Streamlit-Optionen setzen
-try:
-    st.set_option('deprecation.showfileUploaderEncoding', False)
-except Exception:
-    pass
-
-st.markdown("# Aufträge 🚀")
-st.sidebar.markdown("# Aufträge 🚀")
-
-# Dateiname der JSON-Datenbank
+# JSON-Datei für die Aufträge
 database_filename = "bestellungen_database.json"
 
 def load_orders():
     """Lädt die Auftragsdaten aus der JSON-Datei."""
     bestellungen_data = []
-    with open(database_filename, "r") as db:
-        for line in db:
-            bestellungen_info = json.loads(line)
-            bestellungen_data.append(bestellungen_info)
+    try:
+        with open(database_filename, "r") as db:
+            for line in db:
+                bestellungen_info = json.loads(line)
+                bestellungen_data.append(bestellungen_info)
+    except (FileNotFoundError, json.JSONDecodeError):
+        st.error("Die Datei konnte nicht geladen werden oder ist leer.")
     return bestellungen_data
 
 def create_order_dataframe(bestellungen_data):
@@ -62,9 +56,8 @@ def run_timer_for_order(kundentakt, kunde_name):
         time.sleep(1)
     timer_placeholder.empty()
 
-def display_orders_horizontally(bestellungen_data):
+def display_orders_horizontally(df):
     """Zeigt die Aufträge horizontal an und startet nacheinander Timer für jeden Auftrag."""
-    df = create_order_dataframe(bestellungen_data)
     if df is None:
         st.write("Keine Bestellungen vorhanden.")
         return
@@ -77,16 +70,34 @@ def display_orders_horizontally(bestellungen_data):
         col.write(df.iloc[idx][["Führerhaus", "Sidepipes", "Container 1", "Container 2", "Container 3", "Container 4"]])
         col.write(f"Kundentakt: {df.iloc[idx]['Kundentakt']} Sekunden")
 
-    # Timer für jeden Auftrag nacheinander starten
+def process_orders():
+    """Verarbeitet die Aufträge nacheinander und führt den Timer für jeden Auftrag aus."""
+    bestellungen_data = load_orders()
+    df = create_order_dataframe(bestellungen_data)
+
+    if df is None:
+        st.write("Keine Bestellungen vorhanden.")
+        return
+
+    # Timer für jeden Auftrag in Reihenfolge der Aufträge starten
     for idx, row in df.iterrows():
         kundentakt = int(row["Kundentakt"])
         kunde_name = row["Kunde"]
+
+        # Timer starten
         run_timer_for_order(kundentakt, kunde_name)
 
-        # JSON-Datei nach dem Timer für den nächsten Auftrag neu laden
+        # JSON-Datei nach Ablauf jedes Timers neu laden
         bestellungen_data = load_orders()
         df = create_order_dataframe(bestellungen_data)
 
+        # Anzeigen der aktuellen Aufträge nach jedem Neuladen
+        display_orders_horizontally(df)
+
+        # Stoppen, wenn alle Aufträge durchlaufen wurden
+        if idx >= len(df) - 1:
+            st.write("Alle Aufträge wurden verarbeitet.")
+            break
+
 if __name__ == '__main__':
-    bestellungen_data = load_orders()
-    display_orders_horizontally(bestellungen_data)
+    process_orders()

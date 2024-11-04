@@ -6,14 +6,20 @@ import pandas as pd
 # JSON-Datei für die Aufträge
 database_filename = "bestellungen_database.json"
 
+# Set zur Speicherung der bereits geladenen Auftragsnummern
+loaded_orders = set()
+
 def load_last_order():
-    """Lädt die letzte Auftragszeile aus der JSON-Datei."""
+    """Lädt die letzte Auftragszeile aus der JSON-Datei, die noch nicht angezeigt wurde."""
     try:
         with open(database_filename, "r") as db:
             lines = db.readlines()
-            if lines:
-                last_order = json.loads(lines[-1])  # Nur die letzte Zeile laden
-                return last_order
+            for line in reversed(lines):  # Rückwärts durch die Datei, um den neuesten nicht geladenen Auftrag zu finden
+                order = json.loads(line)
+                auftragsnummer = order.get("Auftragsnummer")
+                if auftragsnummer and auftragsnummer not in loaded_orders:
+                    loaded_orders.add(auftragsnummer)  # Markiere den Auftrag als geladen
+                    return order
     except (FileNotFoundError, json.JSONDecodeError):
         st.error("Die Datei konnte nicht geladen werden oder ist leer.")
     return None
@@ -51,23 +57,23 @@ def run_timer(kundentakt, kunde_name):
         time.sleep(1)
     timer_placeholder.empty()
     
-    # Nach Ablauf des Timers erneut die Daten anzeigen
+    # Nach Ablauf des Timers die nächste Bestellung anzeigen
     display_last_order()
 
 def display_last_order():
-    """Zeigt die letzte Bestellung an und startet den Timer."""
+    """Zeigt die nächste nicht angezeigte Bestellung an und startet den Timer."""
     last_order = load_last_order()
     if not last_order:
-        st.write("Keine Bestellungen vorhanden.")
+        st.write("Keine neuen Bestellungen vorhanden.")
         return
 
     # DataFrame aus der letzten Bestellung erstellen und anzeigen
     df = create_order_dataframe(last_order)
     if df is not None:
-        st.markdown("## Letzte Bestellung")
+        st.markdown("## Nächste Bestellung")
         st.dataframe(df.T, use_container_width=True)  # Transponierte Darstellung für kompakte Anzeige
 
-        # Timer für den Kundentakt der letzten Bestellung starten
+        # Timer für den Kundentakt der Bestellung starten
         kundentakt = int(df["Kundentakt"].iloc[0])
         kunde_name = df["Kunde"].iloc[0]
         run_timer(kundentakt, kunde_name)

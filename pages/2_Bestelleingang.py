@@ -2,14 +2,10 @@ import streamlit as st
 import json
 import time
 import pandas as pd
-import csv
 import os
 
 # CSV-Dateiname
 CSV_FILE = "bearbeitsungsstatus.csv"
-
-# JSON-Datei für die Aufträge (zum Füllen der CSV, falls nötig)
-database_filename = "bestellungen_database.json"
 
 def load_last_order_from_csv():
     """Lädt die letzte Zeile aus der CSV-Datei."""
@@ -26,7 +22,7 @@ def load_last_order_from_csv():
     return None
 
 def run_timer(kundentakt, kunde_name):
-    """Führt einen Countdown für den Kundentakt aus und liest danach die CSV-Datei erneut."""
+    """Führt einen Countdown für den Kundentakt aus."""
     timer_placeholder = st.empty()
     for i in range(int(kundentakt), -1, -1):
         timer_placeholder.markdown(
@@ -53,7 +49,7 @@ def display_last_order():
     kunde_name = last_order["Kunde"]
     run_timer(kundentakt, kunde_name)
 
-    # Nach dem Timer erneut die CSV-Datei laden und die nächste letzte Bestellung anzeigen
+    # CSV-Datei erneut laden
     display_last_order()
 
 if __name__ == '__main__':

@@ -30,7 +30,7 @@ def save_to_csv(selected_data):
     # Füge die neue Zeile mit den aktuellen Daten hinzu
     kunde = selected_data.get("Kunde", "Unbekannt")
     auftragsnummer = selected_data.get("Auftragsnummer", "N/A")
-    bestelldatum_uhrzeit = selected_data.get("Bestelldatum", "N/A")
+    bestelldatum_uhrzeit = selected_data.get("Bestelldatum und Uhrzeit", "N/A")
     aktuelle_dauer_uhrzeit = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     zeitdifferenz = timedifference(bestelldatum_uhrzeit)
     current_varianten = selected_data.get("Variante nach Bestellung", "N/A")
@@ -73,12 +73,13 @@ def display_csv():
 # Funktion für die Zeitdifferenzberechnung
 def timedifference(bestelldatum_uhrzeit):
     try:
+        # Überprüfen, ob das Datumsformat korrekt ist
         bestelldatum = datetime.datetime.strptime(bestelldatum_uhrzeit, "%Y-%m-%d %H:%M:%S")
         now = datetime.datetime.now()
         time_difference = (now - bestelldatum).total_seconds()
         return int(time_difference)
-    except ValueError:
-        st.warning("Ungültiges Datum/Uhrzeit-Format für die Berechnung der Zeitdifferenz.")
+    except (ValueError, TypeError):
+        st.warning("Ungültiges Datum/Uhrzeit-Format oder fehlendes Datum für die Berechnung der Zeitdifferenz.")
         return "N/A"
 
 # Laden der JSON-Daten für Bestellungen

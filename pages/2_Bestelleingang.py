@@ -41,7 +41,7 @@ def create_order_dataframe(order_data):
     return df
 
 def run_timer(kundentakt, kunde_name):
-    """Führt einen Countdown für den Kundentakt der letzten Bestellung aus und lädt die Seite neu."""
+    """Führt einen Countdown für den Kundentakt der letzten Bestellung aus und lädt danach die Daten erneut."""
     timer_placeholder = st.empty()
     for i in range(int(kundentakt), -1, -1):
         timer_placeholder.markdown(
@@ -51,8 +51,8 @@ def run_timer(kundentakt, kunde_name):
         time.sleep(1)
     timer_placeholder.empty()
     
-    # Nach Ablauf des Timers die Seite neu laden
-    st.experimental_rerun()
+    # Nach Ablauf des Timers erneut die Daten anzeigen
+    display_last_order()
 
 def display_last_order():
     """Zeigt die letzte Bestellung an und startet den Timer."""

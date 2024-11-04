@@ -100,7 +100,7 @@ if bestellungen_data:
         selected_data = bestellungen_data[selected_index]
 
         # Extrahieren von Auftragsdaten aus `selected_data`
-        current_datetime = selected_data.get("Bestelldatum und Uhrzeit", "N/A")
+        current_datetime = selected_data.get("Bestelldatum Uhrzeit", "N/A")
         current_Kunde = selected_data.get("Kunde", "Unbekannt")
         current_Sonderwunsch = selected_data.get("Sonderwunsch", "N/A")
         current_Varianten = selected_data.get("Variante nach Bestellung", "N/A")

@@ -10,7 +10,7 @@ st.markdown("# Auftrag abschließen ✏️")
 st.sidebar.markdown("# Auftrag abschließen ✏️")
 st.write("Qualitätskontrolle und Versandt")
 
-# Datenbank-Dateien im JSON-Format
+# JSON-Dateien für die Datenbanken
 werkzeugnis_database_filename = "werkzeugnis_database.json"
 bestellungen_database_filename = "bestellungen_database.json"
 
@@ -23,20 +23,20 @@ def load_existing_data(filename):
     except (FileNotFoundError, json.JSONDecodeError):
         return []
 
-# Funktion zum Speichern der Daten in einer CSV-Datei (Header wird vorausgesetzt)
-def save_to_csv(data):
+# Funktion zum Speichern der ausgewählten Daten in einer CSV-Datei (Header wird vorausgesetzt)
+def save_to_csv(selected_data):
     filename = "bearbeitsungsstatus.csv"
     
     # Füge die neue Zeile mit den aktuellen Daten hinzu
-    kunde = data[0]["Kunde"]
-    auftragsnummer = data[0].get("Auftragsnummer", "N/A")
-    bestelldatum_uhrzeit = data[0]["Bestelldatum"]
+    kunde = selected_data.get("Kunde", "Unbekannt")
+    auftragsnummer = selected_data.get("Auftragsnummer", "N/A")
+    bestelldatum_uhrzeit = selected_data.get("Bestelldatum", "N/A")
     aktuelle_dauer_uhrzeit = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    zeitdifferenz = timedifference(data[0]["Bestelldatum"])
-    current_varianten = data[0]["Variante nach Bestellung"]
-    selected_quality_montage = data[0]["Qualitätsprüfung"].get("Montage", "N/A")
-    selected_quality_oberflaeche = data[0]["Qualitätsprüfung"].get("Oberfläche", "N/A")
-    current_Kundentakt = data[0]["Kundentakt"]
+    zeitdifferenz = timedifference(bestelldatum_uhrzeit)
+    current_varianten = selected_data.get("Variante nach Bestellung", "N/A")
+    selected_quality_montage = selected_data.get("Qualitätsprüfung", {}).get("Montage", "N/A")
+    selected_quality_oberflaeche = selected_data.get("Qualitätsprüfung", {}).get("Oberfläche", "N/A")
+    current_Kundentakt = selected_data.get("Kundentakt", "N/A")
     new_row = [kunde, auftragsnummer, bestelldatum_uhrzeit, aktuelle_dauer_uhrzeit, 
                zeitdifferenz, current_varianten, 
                f"Montage: {selected_quality_montage}, Oberfläche: {selected_quality_oberflaeche}", 
@@ -71,11 +71,15 @@ def display_csv():
         st.warning("Die Datei 'bearbeitsungsstatus.csv' wurde nicht gefunden oder enthält keine Daten.")
 
 # Funktion für die Zeitdifferenzberechnung
-def timedifference(current_datetime):
-    bestelldatum = datetime.datetime.strptime(current_datetime, "%Y-%m-%d %H:%M:%S")
-    now = datetime.datetime.now()
-    time_difference = (now - bestelldatum).total_seconds()
-    return int(time_difference)
+def timedifference(bestelldatum_uhrzeit):
+    try:
+        bestelldatum = datetime.datetime.strptime(bestelldatum_uhrzeit, "%Y-%m-%d %H:%M:%S")
+        now = datetime.datetime.now()
+        time_difference = (now - bestelldatum).total_seconds()
+        return int(time_difference)
+    except ValueError:
+        st.warning("Ungültiges Datum/Uhrzeit-Format für die Berechnung der Zeitdifferenz.")
+        return "N/A"
 
 # Laden der JSON-Daten für Bestellungen
 bestellungen_data = load_existing_data(bestellungen_database_filename)
@@ -90,16 +94,16 @@ if bestellungen_data:
 
     # Überprüfen, ob `selected_option` gültig ist, bevor wir fortfahren
     if selected_option in selectbox_options:
-        # Extrahieren von Auftragsdatum und Kundenname aus der ausgewählten Option
+        # Extrahieren des Index der ausgewählten Bestellung
         selected_index = selectbox_options.index(selected_option)
-        selected_datetime = bestellungen_data[selected_index]
-        current_datetime = selected_datetime["Bestelldatum und Uhrzeit"]
-        current_Kunde = selected_datetime["Kunde"]
+        selected_data = bestellungen_data[selected_index]
 
-        # Restliche Daten extrahieren
-        current_Sonderwunsch = selected_datetime.get("Sonderwunsch", "N/A")
-        current_Varianten = selected_datetime.get("Variante nach Bestellung", "N/A")
-        current_Kundentakt = selected_datetime.get("Kundentakt", "N/A")
+        # Extrahieren von Auftragsdaten aus `selected_data`
+        current_datetime = selected_data.get("Bestelldatum und Uhrzeit", "N/A")
+        current_Kunde = selected_data.get("Kunde", "Unbekannt")
+        current_Sonderwunsch = selected_data.get("Sonderwunsch", "N/A")
+        current_Varianten = selected_data.get("Variante nach Bestellung", "N/A")
+        current_Kundentakt = selected_data.get("Kundentakt", "N/A")
 
         st.write(f"Bestellung vom: {current_datetime}")
         st.write("Varianten:")
@@ -114,24 +118,18 @@ if bestellungen_data:
 
         for pruefung in pruefungen:
             st.write(pruefung)
-            selected_q = st.radio(f"Auswahl {pruefung}", qualitaet)
+            selected_q = st.radio(f"Auswahl {pruefung}", qualitaet, key=pruefung)
             if selected_q:
                 selected_quality[pruefung] = selected_q
 
         # Schaltfläche, um das Werkzeugnis zu generieren
         if st.button("Auftrag abgeschlossen und Bestellung zum Kunden verschickt"):
-            werkzeugnis_info = {
-                "Bestelldatum": current_datetime,
-                "Kunde": current_Kunde,
-                "Sonderwunsch": sonderwunsch,
-                "Variante nach Bestellung": current_Varianten,
-                "Qualitätsprüfung": selected_quality,
-                "Kundentakt": current_Kundentakt
-            }
-            existing_data = load_existing_data(werkzeugnis_database_filename)
-            existing_data.append(werkzeugnis_info)
+            # Aktualisieren der Qualitätsprüfung im ausgewählten Auftrag
+            selected_data["Qualitätsprüfung"] = selected_quality
 
             # Speichern in JSON-Datei
+            existing_data = load_existing_data(werkzeugnis_database_filename)
+            existing_data.append(selected_data)
             with open(werkzeugnis_database_filename, "w") as db:
                 for entry in existing_data:
                     db.write(json.dumps(entry) + "\n")
@@ -141,7 +139,7 @@ if bestellungen_data:
             time.sleep(1)
 
             # Speichern in CSV-Datei
-            save_to_csv(existing_data)
+            save_to_csv(selected_data)
 
             # Zeige die aktualisierte CSV-Datei als Tabelle an
             display_csv()

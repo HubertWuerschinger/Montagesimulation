@@ -83,6 +83,15 @@ def timedifference(bestelldatum_uhrzeit):
         st.warning("Ungültiges Datum/Uhrzeit-Format für die Berechnung der Zeitdifferenz.")
         return "N/A"
 
+# Funktion zur Anzeige des Timers basierend auf dem letzten Kundentakt
+def display_timer(kundentakt):
+    st.write("Countdown für den letzten Auftrag (Kundentakt):")
+    timer_placeholder = st.empty()
+    for seconds in range(kundentakt, 0, -1):
+        timer_placeholder.markdown(f"<h2>{seconds} Sekunden verbleibend</h2>", unsafe_allow_html=True)
+        time.sleep(1)
+    timer_placeholder.write("Zeit abgelaufen!")
+
 # Laden der JSON-Daten für Bestellungen
 bestellungen_data = load_existing_data(bestellungen_database_filename)
 
@@ -145,5 +154,12 @@ if bestellungen_data:
 
             # Zeige die aktualisierte CSV-Datei als Tabelle an
             display_csv()
+
+# Timer mit dem Kundentakt des letzten Auftrags
+if bestellungen_data:
+    letzter_auftrag = bestellungen_data[-1]
+    letzter_kundentakt = int(letzter_auftrag.get("Kundentakt", 0))
+    if letzter_kundentakt > 0:
+        display_timer(letzter_kundentakt)
 else:
     st.info("Es sind derzeit keine Bestellungen vorhanden.")

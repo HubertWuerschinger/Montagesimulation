@@ -51,7 +51,7 @@ def run_timer(kundentakt, kunde_name):
     timer_placeholder = st.empty()
     for i in range(int(kundentakt), -1, -1):
         timer_placeholder.markdown(
-            f"<strong><span style='font-size: 2em;'>Zeit bis zum Ausliefern für {kunde_name}: {i} Sekunden</span></strong>",
+            f"<strong><span style='font-size: 3em; color: #333;'>Zeit bis zum Ausliefern für {kunde_name}: {i} Sekunden</span></strong>",
             unsafe_allow_html=True
         )
         time.sleep(1)
@@ -71,7 +71,16 @@ def display_last_order():
     df = create_order_dataframe(last_order)
     if df is not None:
         st.markdown("## Nächste Bestellung")
-        st.dataframe(df.T, use_container_width=True)  # Transponierte Darstellung für kompakte Anzeige
+        
+        # Größere Schriftgröße für die Tabelle festlegen
+        styled_df = df.T.style.set_properties(**{
+            'font-size': '20pt',  # Vergrößerte Schriftgröße für die Zellen
+            'text-align': 'left'
+        }).set_table_styles([
+            {'selector': 'th', 'props': [('font-size', '22pt'), ('text-align', 'left')]}  # Größere Schrift für die Kopfzeilen
+        ])
+        
+        st.dataframe(styled_df, use_container_width=True)  # Transponierte Darstellung für kompakte Anzeige
 
         # Timer für den Kundentakt der Bestellung starten
         kundentakt = int(df["Kundentakt"].iloc[0])

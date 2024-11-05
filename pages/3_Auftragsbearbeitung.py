@@ -27,20 +27,23 @@ def load_existing_data(filename):
 def save_to_csv(selected_data):
     filename = "bearbeitsungsstatus.csv"
     
-    # Füge die neue Zeile mit den aktuellen Daten hinzu
+    # Extrahiere die erforderlichen Daten für die CSV-Datei
     kunde = selected_data.get("Kunde", "Unbekannt")
     auftragsnummer = selected_data.get("Auftragsnummer", "N/A")
-    bestelldatum_uhrzeit = selected_data.get("Bestelldatum und Uhrzeit", "N/A")
+    bestelldatum_uhrzeit = selected_data.get("Bestelldatum und Uhrzeit", "N/A")  # Einheitliche Benennung
     aktuelle_dauer_uhrzeit = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     zeitdifferenz = timedifference(bestelldatum_uhrzeit)
     current_varianten = selected_data.get("Variante nach Bestellung", "N/A")
     selected_quality_montage = selected_data.get("Qualitätsprüfung", {}).get("Montage", "N/A")
     selected_quality_oberflaeche = selected_data.get("Qualitätsprüfung", {}).get("Oberfläche", "N/A")
     current_Kundentakt = selected_data.get("Kundentakt", "N/A")
-    new_row = [kunde, auftragsnummer, bestelldatum_uhrzeit, aktuelle_dauer_uhrzeit, 
-               zeitdifferenz, current_varianten, 
-               f"Montage: {selected_quality_montage}, Oberfläche: {selected_quality_oberflaeche}", 
-               current_Kundentakt]
+    
+    new_row = [
+        kunde, auftragsnummer, bestelldatum_uhrzeit, aktuelle_dauer_uhrzeit,
+        zeitdifferenz, current_varianten,
+        f"Montage: {selected_quality_montage}, Oberfläche: {selected_quality_oberflaeche}",
+        current_Kundentakt
+    ]
 
     # Schreibe die Daten in die CSV-Datei im Anfügemodus
     with open(filename, 'a', newline='', encoding='ISO-8859-1') as csvfile:
@@ -100,7 +103,7 @@ if bestellungen_data:
         selected_data = bestellungen_data[selected_index]
 
         # Extrahieren von Auftragsdaten aus `selected_data`
-        current_datetime = selected_data.get("Bestelldatum Uhrzeit", "N/A")
+        current_datetime = selected_data.get("Bestelldatum und Uhrzeit", "N/A")  # Einheitliche Benennung
         current_Kunde = selected_data.get("Kunde", "Unbekannt")
         current_Sonderwunsch = selected_data.get("Sonderwunsch", "N/A")
         current_Varianten = selected_data.get("Variante nach Bestellung", "N/A")
